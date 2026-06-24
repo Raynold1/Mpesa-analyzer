@@ -457,26 +457,48 @@ NAV_ITEMS = [
     ("\U0001f5a8", "Print Report",    "report"),
 ]
 
-# Read current page from session state
+# ─── ROUTING & STATE MANAGEMENT ──────────────────────────────────────────────
+# Read initial page from query parameters or session state
+initial_page = "home"
+try:
+    qp = st.query_params.get("nav_page", None)
+    if qp and qp in ["home", "dashboard", "merged", "pivot", "report"]:
+        initial_page = qp
+except Exception:
+    pass
+
 if "page" not in st.session_state:
-    st.session_state["page"] = "home"
+    st.session_state["page"] = initial_page
 
-current_page = st.session_state["page"]
+# Render a hidden radio button in the sidebar to act as our reactive router.
+# The sidebar is hidden via CSS, so this is completely invisible to users,
+# but remains in the DOM where our custom JavaScript can click it.
+with st.sidebar:
+    if "hidden_nav_radio" not in st.session_state:
+        st.session_state["hidden_nav_radio"] = st.session_state["page"]
+        
+    current_page = st.radio(
+        "Navigation Router",
+        options=["home", "dashboard", "merged", "pivot", "report"],
+        key="hidden_nav_radio",
+        label_visibility="collapsed"
+    )
+    # Synchronize the main page state
+    st.session_state["page"] = current_page
 
-# Build nav link HTML for desktop & drawer
+# Build nav link HTML for desktop & drawer using data-nav-page attributes
 def build_nav_link(icon, label, key, mobile=False):
     active_cls = "active" if current_page == key else ""
-    href = f"/?nav_page={key}"
     if mobile:
         return (
             '<li>'
-            f'<a class="{active_cls}" href="{href}" target="_self">'
+            f'<a class="{active_cls}" data-nav-page="{key}" href="#">'
             f'<span class="nav-icon">{icon}</span><span>{label}</span>'
             '</a></li>'
         )
     else:
         return (
-            f'<a class="{active_cls}" href="{href}" target="_self">'
+            f'<a class="{active_cls}" data-nav-page="{key}" href="#">'
             f'<span class="nav-icon">{icon}</span><span>{label}</span>'
             '</a>'
         )
@@ -484,8 +506,7 @@ def build_nav_link(icon, label, key, mobile=False):
 desktop_links = "".join(build_nav_link(i, l, k, False) for i, l, k in NAV_ITEMS)
 drawer_links  = "".join(build_nav_link(i, l, k, True)  for i, l, k in NAV_ITEMS)
 
-# CSS-only hamburger toggle using checkbox hack (no JS needed)
-# The hidden checkbox #navToggle controls .mpesa-drawer and .mpesa-hamburger via CSS sibling selectors
+# HTML for top navbar, hamburger toggle, and mobile drawer
 nav_html = (
     # Hidden checkbox — the "toggle state"
     '<input type="checkbox" id="navToggle" style="display:none;">'
@@ -513,6 +534,80 @@ nav_html = (
 
 st.markdown(nav_html, unsafe_allow_html=True)
 
+# Inject client-side JS event delegation to handle clicks on custom navbar items
+# and trigger the hidden st.radio button without reloading the page.
+# Using event delegation on parentDoc.body ensures it persists across all Streamlit reruns,
+# and navListenerBound ensures it's only bound once.
+components_js = """
+<script>
+(function() {
+    const parentDoc = window.parent ? window.parent.document : document;
+    if (!parentDoc) return;
+    
+    if (!parentDoc.body.dataset.navListenerBound) {
+        parentDoc.body.dataset.navListenerBound = "true";
+        
+        parentDoc.body.addEventListener('click', function(e) {
+            const navLink = e.target.closest('[data-nav-page]');
+            if (!navLink) return;
+            
+            e.preventDefault();
+            const pageKey = navLink.getAttribute('data-nav-page');
+            
+            // Find the hidden radio button in the parent document
+            let targetInput = null;
+            const pages = ["home", "dashboard", "merged", "pivot", "report"];
+            const pageIndex = pages.indexOf(pageKey);
+            
+            if (pageIndex !== -1) {
+                // Try searching inside the sidebar first (highly precise)
+                const sidebar = parentDoc.querySelector('[data-testid="stSidebar"]') || parentDoc.querySelector('section[data-testid="stSidebar"]');
+                if (sidebar) {
+                    const radio = sidebar.querySelector('div[data-testid="stRadio"]');
+                    if (radio) {
+                        const inputs = radio.querySelectorAll('input[type="radio"]');
+                        if (inputs[pageIndex]) {
+                            targetInput = inputs[pageIndex];
+                        }
+                    }
+                }
+                
+                // Fallback: search all radio containers on the page
+                if (!targetInput) {
+                    const radioContainers = parentDoc.querySelectorAll('div[data-testid="stRadio"]');
+                    for (const container of radioContainers) {
+                        const inputs = container.querySelectorAll('input[type="radio"]');
+                        if (inputs.length === 5 && inputs[pageIndex]) {
+                            targetInput = inputs[pageIndex];
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (targetInput) {
+                targetInput.click();
+                
+                // Update URL query parameters in the address bar without page reload
+                const parentWin = window.parent || window;
+                const newUrl = parentWin.location.protocol + "//" + parentWin.location.host + parentWin.location.pathname + "?nav_page=" + pageKey;
+                parentWin.history.pushState({ path: newUrl }, '', newUrl);
+                
+                // Uncheck the hamburger checkbox to close mobile drawer on transition
+                const navToggle = parentDoc.getElementById('navToggle');
+                if (navToggle) {
+                    navToggle.checked = false;
+                }
+            } else {
+                console.error("Navigation target radio button not found for page: " + pageKey + " (index: " + pageIndex + ")");
+            }
+        });
+    }
+})();
+</script>
+"""
+st.components.v1.html(components_js, height=0, width=0)
+
 # CSS for checkbox-hack hamburger — uses :has() which works across DOM boundaries
 st.markdown("""
 <style>
@@ -537,18 +632,6 @@ body:has(#navToggle:checked) .mpesa-hamburger span:nth-child(3) {
 }
 </style>
 """, unsafe_allow_html=True)
-
-
-
-# ─── READ PAGE FROM QUERY PARAMS ─────────────────────────────────────────────
-try:
-    qp = st.query_params.get("nav_page", None)
-    if qp and qp in [k for _, _, k in NAV_ITEMS]:
-        if st.session_state.get("page") != qp:
-            st.session_state["page"] = qp
-            st.rerun()
-except Exception:
-    pass
 
 menu_page = st.session_state["page"]
 
