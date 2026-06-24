@@ -10,189 +10,339 @@ if __name__ == "__main__" and "streamlit" not in " ".join(sys.argv):
     print("Please run this app with Streamlit:  streamlit run streamlit_app.py")
     sys.exit(0)
 
-# Set page configuration with a nice favicon and layout
+# Set page configuration
 st.set_page_config(
     page_title="Mpesa Analyzer - Premium Insights",
     page_icon="📥",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Custom premium styling
+# ─── MOBILE-FIRST CSS + TOGGLEABLE NAV BAR ──────────────────────────────────
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap');
-    
-    /* Global Background and Typography */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     html, body, [data-testid="stAppViewContainer"] {
-        font-family: 'Plus Jakarta Sans', 'Inter', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-        background-color: #f8fafc;
+        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #f0f4f8;
         color: #1e293b;
+        overflow-x: hidden;
     }
-    
-    /* Top Header */
-    [data-testid="stHeader"] {
-        background-color: rgba(248, 250, 252, 0.8);
-        backdrop-filter: blur(8px);
+
+    /* Hide Streamlit chrome */
+    [data-testid="stHeader"] { display: none !important; }
+    [data-testid="stSidebar"] { display: none !important; }
+    section[data-testid="stSidebar"] { display: none !important; }
+    #MainMenu { display: none !important; }
+    footer { display: none !important; }
+    .stDeployButton { display: none !important; }
+
+    /* Push content below the fixed navbar */
+    [data-testid="stAppViewContainer"] > .main {
+        padding-top: 72px !important;
     }
-    
-    /* Sidebar Overrides */
-    [data-testid="stSidebar"] {
-        background-color: #ffffff !important;
-        border-right: 1px solid #f1f5f9 !important;
-        box-shadow: 4px 0 24px rgba(15, 23, 42, 0.02) !important;
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+        max-width: 1200px !important;
     }
-    
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
-        font-size: 0.95rem;
+
+    /* ── TOP NAV BAR ── */
+    .mpesa-navbar {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 9999;
+        background: linear-gradient(135deg, #0a2e1f 0%, #0f4c35 50%, #1a5c40 100%);
+        box-shadow: 0 2px 20px rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.5rem;
+        height: 64px;
     }
-    
-    /* Brand Design */
-    .brand-title {
-        font-size: 1.75rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #10b981 0%, #059669 50%, #0f766e 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.15rem;
-        letter-spacing: -0.025em;
+
+    .mpesa-brand {
         display: flex;
         align-items: center;
         gap: 0.6rem;
+        text-decoration: none;
     }
-    
-    .brand-subtitle {
-        font-size: 0.85rem;
-        color: #64748b;
-        margin-bottom: 1.75rem;
-        border-bottom: 1px solid #f1f5f9;
-        padding-bottom: 1rem;
+    .mpesa-brand-icon {
+        font-size: 1.6rem;
+        line-height: 1;
+    }
+    .mpesa-brand-text {
+        display: flex;
+        flex-direction: column;
+    }
+    .mpesa-brand-name {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+    .mpesa-brand-tagline {
+        font-size: 0.68rem;
+        color: #6ee7b7;
         font-weight: 500;
+        letter-spacing: 0.04em;
     }
-    
+
+    /* Desktop nav links */
+    .mpesa-nav-links {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        list-style: none;
+    }
+    .mpesa-nav-links a {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 0.9rem;
+        border-radius: 8px;
+        color: rgba(255,255,255,0.75);
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+    }
+    .mpesa-nav-links a:hover {
+        background: rgba(255,255,255,0.12);
+        color: #ffffff;
+    }
+    .mpesa-nav-links a.active {
+        background: rgba(16,185,129,0.25);
+        color: #6ee7b7;
+        font-weight: 600;
+        border: 1px solid rgba(16,185,129,0.3);
+    }
+
+    /* Hamburger button */
+    .mpesa-hamburger {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+        z-index: 10001;
+        padding: 0;
+    }
+    .mpesa-hamburger:hover { background: rgba(255,255,255,0.2); }
+    .mpesa-hamburger span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        background: #ffffff;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+    }
+    .mpesa-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .mpesa-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .mpesa-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* Mobile drawer overlay */
+    .mpesa-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 9998;
+        backdrop-filter: blur(2px);
+    }
+    .mpesa-overlay.open { display: block; }
+
+    /* Mobile drawer */
+    .mpesa-drawer {
+        display: none;
+        position: fixed;
+        top: 0; right: 0;
+        width: min(280px, 85vw);
+        height: 100vh;
+        background: linear-gradient(180deg, #0a2e1f 0%, #0f4c35 100%);
+        z-index: 9999;
+        padding: 5rem 1.25rem 2rem;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: -8px 0 32px rgba(0,0,0,0.3);
+        overflow-y: auto;
+    }
+    .mpesa-drawer.open { transform: translateX(0); }
+
+    .mpesa-drawer-links {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .mpesa-drawer-links a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        color: rgba(255,255,255,0.8);
+        font-size: 0.95rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+    .mpesa-drawer-links a:hover {
+        background: rgba(255,255,255,0.1);
+        color: #ffffff;
+        border-color: rgba(255,255,255,0.1);
+    }
+    .mpesa-drawer-links a.active {
+        background: rgba(16,185,129,0.2);
+        color: #6ee7b7;
+        font-weight: 600;
+        border-color: rgba(16,185,129,0.35);
+    }
+    .mpesa-drawer-links .nav-icon { font-size: 1.2rem; }
+
+    .mpesa-drawer-divider {
+        border: none;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        margin: 1.25rem 0;
+    }
+    .mpesa-drawer-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: rgba(255,255,255,0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* ── MAIN CONTENT CARD ── */
     .main-title {
-        font-size: 2.25rem;
+        font-size: clamp(1.5rem, 4vw, 2.25rem);
         font-weight: 800;
         color: #0f172a;
-        margin-bottom: 0.15rem;
         letter-spacing: -0.03em;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #047857 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        margin-bottom: 0.25rem;
+        line-height: 1.2;
     }
-    
     .main-subtitle {
         font-size: 1rem;
         color: #64748b;
-        margin-bottom: 2rem;
+        margin-bottom: 1.75rem;
         font-weight: 400;
     }
-    
-    /* Navigation Menu Styling */
-    div[data-testid="stRadio"] [data-testid="stWidgetLabel"] {
-        font-weight: 700 !important;
-        color: #64748b !important;
-        text-transform: uppercase !important;
-        font-size: 0.75rem !important;
-        letter-spacing: 0.05em !important;
-        margin-bottom: 0.75rem !important;
+
+    /* ── KPI CARDS ── */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.75rem;
     }
-    
-    div[data-testid="stRadio"] div[role="radiogroup"] {
-        gap: 0 !important;
+    .kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.15rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+        display: flex;
+        flex-direction: column;
+        min-height: 115px;
     }
-    
-    div[data-testid="stRadio"] div[role="radiogroup"] > label {
-        display: flex !important;
-        align-items: center !important;
-        padding: 12px 16px !important;
-        margin-bottom: 8px !important;
-        border-radius: 12px !important;
-        border: 1px solid #e2e8f0 !important;
-        background-color: #ffffff !important;
-        color: #475569 !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        font-weight: 500 !important;
-        cursor: pointer !important;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.08); }
+    .kpi-card-indigo:hover { border-color: #6366f1; }
+    .kpi-card-amber:hover  { border-color: #f59e0b; }
+    .kpi-card-emerald:hover{ border-color: #10b981; }
+    .kpi-card-rose:hover   { border-color: #f43f5e; }
+    .kpi-card-teal:hover   { border-color: #0d9488; }
+    .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+    .kpi-label  { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .kpi-icon-container { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .kpi-value  { font-size: clamp(1.2rem,2.5vw,1.55rem); font-weight: 700; color: #0f172a; line-height: 1.2; margin-top: 0.2rem; }
+    .kpi-badge  { font-size: 0.72rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 9999px; display: inline-block; margin-top: 0.6rem; width: fit-content; }
+
+    .bg-indigo-50 { background-color: #e0e7ff; color: #4338ca; }
+    .bg-amber-50  { background-color: #fffbeb; color: #b45309; }
+    .bg-emerald-50{ background-color: #ecfdf5; color: #047857; }
+    .bg-rose-50   { background-color: #fff1f2; color: #b91c1c; }
+    .bg-teal-50   { background-color: #f0fdfa; color: #0f766e; }
+    .badge-indigo { background-color: #e0e7ff; color: #3730a3; }
+    .badge-amber  { background-color: #fef3c7; color: #92400e; }
+    .badge-emerald{ background-color: #d1fae5; color: #065f46; }
+    .badge-rose   { background-color: #ffe4e6; color: #991b1b; }
+    .badge-teal   { background-color: #ccfbf1; color: #115e59; }
+
+    /* ── WELCOME CARD ── */
+    .welcome-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+        margin-bottom: 1.5rem;
     }
-    
-    div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {
-        background-color: #f8fafc !important;
-        border-color: #cbd5e1 !important;
-        color: #0f172a !important;
-        transform: translateX(3px) !important;
+    .welcome-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+        padding: 0.85rem;
+        border-radius: 12px;
+        transition: all 0.2s;
     }
-    
-    div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input[type="radio"]:checked) {
-        background-color: #ecfdf4 !important;
-        border-color: #10b981 !important;
-        color: #065f46 !important;
-        font-weight: 600 !important;
-        box-shadow: 0 4px 12px -1px rgba(16, 185, 129, 0.12), 0 2px 4px -2px rgba(16, 185, 129, 0.1) !important;
+    .welcome-step:hover { background: #f8fafc; transform: translateX(4px); }
+    .welcome-icon {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        color: #059669;
+        border-radius: 10px;
+        width: 34px; height: 34px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 1rem; flex-shrink: 0;
     }
-    
-    /* Hide default radio elements */
-    div[data-testid="stRadio"] div[role="radiogroup"] > label input[type="radio"] {
-        display: none !important;
-    }
-    div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-of-type {
-        display: none !important;
-    }
-    div[data-testid="stRadio"] div[role="radiogroup"] > label div[data-testid="stMarkdownContainer"] {
-        margin-left: 0 !important;
-    }
-    
-    /* Subheader & Section Titles */
-    h3 {
-        font-size: 1.5rem !important;
-        font-weight: 700 !important;
-        color: #0f172a !important;
-        margin-top: 1.5rem !important;
-        margin-bottom: 1rem !important;
-        letter-spacing: -0.02em !important;
-    }
-    
-    h5 {
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        color: #1e293b !important;
-        margin-bottom: 0.75rem !important;
-    }
-    
-    /* File Uploader override */
+    .welcome-text { font-size: 0.9rem; color: #475569; line-height: 1.5; }
+
+    /* ── FILE UPLOADER ── */
     div[data-testid="stFileUploader"] {
         border: 2px dashed #cbd5e1 !important;
         border-radius: 16px !important;
-        padding: 1.75rem !important;
-        background-color: #ffffff !important;
+        padding: 1.5rem !important;
+        background: #ffffff !important;
         transition: all 0.25s ease !important;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02) !important;
     }
     div[data-testid="stFileUploader"]:hover {
         border-color: #10b981 !important;
-        background-color: #f0fdf4 !important;
-        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.05) !important;
+        background: #f0fdf4 !important;
     }
-    
     div[data-testid="stFileUploader"] button {
         background-color: #10b981 !important;
         color: #ffffff !important;
         border: none !important;
         border-radius: 8px !important;
-        padding: 0.5rem 1.25rem !important;
         font-weight: 600 !important;
-        transition: all 0.2s !important;
-        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15) !important;
     }
-    
-    div[data-testid="stFileUploader"] button:hover {
-        background-color: #059669 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25) !important;
-    }
-    
-    /* Standard and Custom Buttons styling */
+
+    /* ── BUTTONS ── */
     div.stButton button {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         color: #ffffff !important;
@@ -201,237 +351,219 @@ st.markdown("""
         padding: 0.6rem 1.5rem !important;
         font-weight: 600 !important;
         font-size: 0.95rem !important;
-        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2), 0 2px 4px -2px rgba(16, 185, 129, 0.1) !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 6px -1px rgba(16,185,129,0.2) !important;
+        transition: all 0.2s cubic-bezier(0.4,0,0.2,1) !important;
     }
     div.stButton button:hover {
         transform: translateY(-2px) !important;
-        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.25), 0 4px 6px -2px rgba(16, 185, 129, 0.15) !important;
+        box-shadow: 0 10px 15px -3px rgba(16,185,129,0.25) !important;
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
     }
-    div.stButton button:active {
-        transform: translateY(0) !important;
-    }
-    
-    /* Clear action button */
-    div.stButton button[help*="Clear"] {
-        background: #ffffff !important;
-        color: #ef4444 !important;
-        border: 1px solid #fee2e2 !important;
-        box-shadow: 0 1px 2px rgba(239, 68, 68, 0.05) !important;
-    }
-    div.stButton button[help*="Clear"]:hover {
-        background: #fef2f2 !important;
-        border-color: #fca5a5 !important;
-        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.08) !important;
-        color: #dc2626 !important;
-    }
-    
-    /* Download Buttons */
     div.stDownloadButton button {
-        background-color: #ffffff !important;
+        background: #ffffff !important;
         color: #334155 !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 12px !important;
-        padding: 0.6rem 1.25rem !important;
         font-weight: 600 !important;
-        font-size: 0.9rem !important;
-        transition: all 0.2s ease-in-out !important;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s ease !important;
         width: 100% !important;
     }
     div.stDownloadButton button:hover {
-        background-color: #f8fafc !important;
         border-color: #10b981 !important;
         color: #059669 !important;
         transform: translateY(-1px) !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
     }
-    
-    /* Input and Select elements */
-    div[data-testid="stSelectbox"] > div {
-        border-radius: 12px !important;
-    }
+
+    /* ── INPUTS ── */
+    div[data-testid="stSelectbox"] > div { border-radius: 12px !important; }
     div[data-testid="stTextInput"] input {
         border-radius: 12px !important;
         border: 1px solid #cbd5e1 !important;
         padding: 0.5rem 0.75rem !important;
-        font-size: 0.95rem !important;
-        transition: all 0.2s !important;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
     }
     div[data-testid="stTextInput"] input:focus {
         border-color: #10b981 !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+        box-shadow: 0 0 0 3px rgba(16,185,129,0.15) !important;
     }
-    
-    /* Alert Messages style */
-    .stAlert {
-        border-radius: 16px !important;
-        border: 1px solid #f1f5f9 !important;
-        box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.02) !important;
-        background-color: #ffffff !important;
-    }
-    .stAlert [data-testid="stMarkdownContainer"] {
-        color: #334155 !important;
-        font-size: 0.95rem !important;
-    }
-    
-    /* Welcome card / Guide panel */
-    .welcome-card {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 20px;
-        padding: 2.5rem;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-        margin-bottom: 2rem;
-    }
-    .welcome-step {
-        display: flex;
-        align-items: flex-start;
-        gap: 1.25rem;
-        margin-bottom: 1.5rem;
-        padding: 1rem;
-        border-radius: 12px;
-        transition: all 0.2s;
-    }
-    .welcome-step:hover {
-        background-color: #f8fafc;
-        transform: translateX(4px);
-    }
-    .welcome-icon {
-        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-        color: #059669;
-        border-radius: 10px;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.1rem;
-        flex-shrink: 0;
-        box-shadow: 0 2px 4px 0 rgba(16, 185, 129, 0.05);
-    }
-    .welcome-text {
-        font-size: 0.95rem;
-        color: #475569;
-        line-height: 1.5;
-    }
-    
-    /* Expander Container overrides */
-    div[data-testid="stExpander"] {
-        background-color: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 16px !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02) !important;
-        overflow: hidden !important;
-    }
-    
-    /* KPI Cards Styling Grid */
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1.25rem;
-        margin-bottom: 2rem;
-        width: 100%;
-    }
-    .kpi-card {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 1.25rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 125px;
-    }
-    .kpi-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-    }
-    .kpi-card-indigo:hover { border-color: #6366f1; }
-    .kpi-card-amber:hover { border-color: #f59e0b; }
-    .kpi-card-emerald:hover { border-color: #10b981; }
-    .kpi-card-rose:hover { border-color: #f43f5e; }
-    .kpi-card-teal:hover { border-color: #0d9488; }
-    
-    .kpi-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-    .kpi-label {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .kpi-icon-container {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-    }
-    .kpi-value {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #0f172a;
-        line-height: 1.2;
-        margin-top: 0.25rem;
-    }
-    .kpi-badge {
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 0.15rem 0.5rem;
-        border-radius: 9999px;
-        display: inline-block;
-        margin-top: 0.75rem;
-        width: fit-content;
-    }
-    
-    /* Color utility classes for KPI Cards */
-    .bg-indigo-50 { background-color: #e0e7ff; color: #4338ca; }
-    .bg-amber-50 { background-color: #fffbeb; color: #b45309; }
-    .bg-emerald-50 { background-color: #ecfdf5; color: #047857; }
-    .bg-rose-50 { background-color: #fff1f2; color: #b91c1c; }
-    .bg-teal-50 { background-color: #f0fdfa; color: #0f766e; }
-    
-    .badge-indigo { background-color: #e0e7ff; color: #3730a3; }
-    .badge-amber { background-color: #fef3c7; color: #92400e; }
-    .badge-emerald { background-color: #d1fae5; color: #065f46; }
-    .badge-rose { background-color: #ffe4e6; color: #991b1b; }
-    .badge-teal { background-color: #ccfbf1; color: #115e59; }
-    
-    /* Tables and Dataframe tweaks */
+
+    /* ── DATAFRAME ── */
     div[data-testid="stDataFrame"] {
         border-radius: 16px !important;
         overflow: hidden !important;
         border: 1px solid #e2e8f0 !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02) !important;
     }
-    
-    /* Footer Styling */
+
+    /* ── EXPANDER ── */
+    div[data-testid="stExpander"] {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
+    }
+
+    /* ── ALERTS ── */
+    .stAlert { border-radius: 14px !important; }
+
+    /* ── SECTION HEADERS ── */
+    h3 {
+        font-size: 1.35rem !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        margin-top: 1.25rem !important;
+        margin-bottom: 0.75rem !important;
+        letter-spacing: -0.02em !important;
+    }
+
+    /* ── FOOTER ── */
     .app-footer {
         text-align: center;
-        padding: 2.5rem 0;
+        padding: 2rem 0;
         color: #94a3b8;
-        font-size: 0.85rem;
-        border-top: 1px solid #f1f5f9;
-        margin-top: 5rem;
+        font-size: 0.82rem;
+        border-top: 1px solid #e2e8f0;
+        margin-top: 4rem;
         font-weight: 500;
+    }
+
+    /* ── RESPONSIVE BREAKPOINTS ── */
+    @media (max-width: 768px) {
+        .mpesa-nav-links { display: none !important; }
+        .mpesa-hamburger { display: flex !important; }
+        .mpesa-drawer    { display: block !important; }
+
+        .block-container {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+        .kpi-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.75rem !important;
+        }
+        .welcome-card { padding: 1.25rem; }
+    }
+    @media (max-width: 480px) {
+        .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+        .mpesa-navbar { padding: 0 1rem; }
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Helper function to find columns case-insensitively/partially
+# ─── NAV BAR HTML + JS ───────────────────────────────────────────────────────
+NAV_ITEMS = [
+    ("\U0001f3e0", "Home & Upload",    "home"),
+    ("\U0001f4c8", "Visual Dashboard", "dashboard"),
+    ("\U0001f4c1", "Merged Statement", "merged"),
+    ("\U0001f4ca", "Monthly Pivot",    "pivot"),
+    ("\U0001f5a8", "Print Report",    "report"),
+]
+
+# Read current page from session state
+if "page" not in st.session_state:
+    st.session_state["page"] = "home"
+
+current_page = st.session_state["page"]
+
+# Build nav link HTML for desktop & drawer
+def build_nav_link(icon, label, key, mobile=False):
+    active_cls = "active" if current_page == key else ""
+    href = f"/?nav_page={key}"
+    if mobile:
+        return (
+            '<li>'
+            f'<a class="{active_cls}" href="{href}" target="_self">'
+            f'<span class="nav-icon">{icon}</span><span>{label}</span>'
+            '</a></li>'
+        )
+    else:
+        return (
+            f'<a class="{active_cls}" href="{href}" target="_self">'
+            f'<span class="nav-icon">{icon}</span><span>{label}</span>'
+            '</a>'
+        )
+
+desktop_links = "".join(build_nav_link(i, l, k, False) for i, l, k in NAV_ITEMS)
+drawer_links  = "".join(build_nav_link(i, l, k, True)  for i, l, k in NAV_ITEMS)
+
+# CSS-only hamburger toggle using checkbox hack (no JS needed)
+# The hidden checkbox #navToggle controls .mpesa-drawer and .mpesa-hamburger via CSS sibling selectors
+nav_html = (
+    # Hidden checkbox — the "toggle state"
+    '<input type="checkbox" id="navToggle" style="display:none;">'
+    '<nav class="mpesa-navbar" id="mpesaNavbar">'
+    '<div class="mpesa-brand">'
+    '<span class="mpesa-brand-icon">\U0001f4e5</span>'
+    '<div class="mpesa-brand-text">'
+    '<span class="mpesa-brand-name">Mpesa Analyzer</span>'
+    '<span class="mpesa-brand-tagline">Financial Insights</span>'
+    '</div></div>'
+    f'<ul class="mpesa-nav-links" id="desktopNav">{desktop_links}</ul>'
+    # The hamburger label toggles #navToggle checkbox
+    '<label for="navToggle" class="mpesa-hamburger" id="hamburgerBtn" aria-label="Toggle menu">'
+    '<span></span><span></span><span></span>'
+    '</label>'
+    '</nav>'
+    '<label for="navToggle" class="mpesa-overlay" id="navOverlay"></label>'
+    '<div class="mpesa-drawer" id="navDrawer">'
+    '<p class="mpesa-drawer-label">Navigation</p>'
+    f'<ul class="mpesa-drawer-links">{drawer_links}</ul>'
+    '<hr class="mpesa-drawer-divider">'
+    '<p style="color:rgba(255,255,255,0.4);font-size:0.75rem;padding:0 1rem;">Mpesa Analyzer &copy; 2026</p>'
+    '</div>'
+)
+
+st.markdown(nav_html, unsafe_allow_html=True)
+
+# CSS for checkbox-hack hamburger — uses :has() which works across DOM boundaries
+st.markdown("""
+<style>
+/* Drawer slides in when navToggle checkbox is checked */
+body:has(#navToggle:checked) .mpesa-drawer {
+    transform: translateX(0) !important;
+}
+/* Overlay shows when drawer is open */
+body:has(#navToggle:checked) .mpesa-overlay {
+    display: block !important;
+}
+/* Hamburger animates when checked */
+body:has(#navToggle:checked) .mpesa-hamburger span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg) !important;
+}
+body:has(#navToggle:checked) .mpesa-hamburger span:nth-child(2) {
+    opacity: 0 !important;
+    transform: scaleX(0) !important;
+}
+body:has(#navToggle:checked) .mpesa-hamburger span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg) !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+# ─── READ PAGE FROM QUERY PARAMS ─────────────────────────────────────────────
+try:
+    qp = st.query_params.get("nav_page", None)
+    if qp and qp in [k for _, _, k in NAV_ITEMS]:
+        if st.session_state.get("page") != qp:
+            st.session_state["page"] = qp
+            st.rerun()
+except Exception:
+    pass
+
+menu_page = st.session_state["page"]
+
+# Map page key to display name for legacy code
+PAGE_LABELS = {
+    "home":      "🏠 Home & Upload",
+    "dashboard": "📈 Visual Dashboard",
+    "merged":    "📁 Merged Statement",
+    "pivot":     "📊 Monthly Pivot",
+    "report":    "🖨️ Printable Report",
+}
+menu = PAGE_LABELS.get(menu_page, "🏠 Home & Upload")
+
+
+# ─── HELPER ──────────────────────────────────────────────────────────────────
 def find_col(df, target):
     for c in df.columns:
         if c.lower() == target.lower():
@@ -441,7 +573,8 @@ def find_col(df, target):
             return c
     return None
 
-# Initialize persistent session state
+
+# ─── SESSION STATE ────────────────────────────────────────────────────────────
 if "uploaded_file_bytes" not in st.session_state:
     st.session_state["uploaded_file_bytes"] = None
 if "uploaded_file_name" not in st.session_state:
@@ -453,38 +586,17 @@ if "case_insensitive" not in st.session_state:
 if "date_col" not in st.session_state:
     st.session_state["date_col"] = ""
 
-# Sidebar Menu (User requested navigation items in the sidebar)
-with st.sidebar:
-    st.markdown('<div class="brand-title">📥 Mpesa Analyzer</div>', unsafe_allow_html=True)
-    st.markdown('<div class="brand-subtitle">Financial statement aggregator</div>', unsafe_allow_html=True)
-    
-    # Navigation items
-    menu = st.radio(
-        "Navigation",
-        options=[
-            "🏠 Home & Upload", 
-            "📈 Visual Dashboard", 
-            "📁 Merged Statement", 
-            "📊 Monthly Pivot", 
-            "🖨️ Printable Report"
-        ]
-    )
 
-# Excel processing cache logic
-@st.cache_data(show_spinner="Processing statements...")
+# ─── EXCEL PROCESSING ────────────────────────────────────────────────────────
+@st.cache_data(show_spinner="Processing statements…")
 def process_statement(file_bytes, required_cols_str, case_insensitive_flag):
     try:
         sheets = pd.read_excel(io.BytesIO(file_bytes), sheet_name=None)
         required_columns = [c.strip() for c in required_cols_str.split(",") if c.strip()]
-        
         if not required_columns:
             return None, "Please specify at least one required column in settings.", {}, sheets, []
-            
-        merged_dfs = []
-        included_sheets = []
-        skipped = {}
+        merged_dfs, included_sheets, skipped = [], [], {}
         req_lower = [c.lower() for c in required_columns]
-        
         for sheet_name, df in sheets.items():
             try:
                 cols = df.columns.tolist()
@@ -493,36 +605,25 @@ def process_statement(file_bytes, required_cols_str, case_insensitive_flag):
                     has_all = all(r in cols_lower for r in req_lower)
                 else:
                     has_all = all(r in cols for r in required_columns)
-                    
                 if has_all:
                     merged_dfs.append(df)
                     included_sheets.append(sheet_name)
                 else:
-                    if case_insensitive_flag:
-                        missing = [r for r in req_lower if r not in cols_lower]
-                    else:
-                        missing = [r for r in required_columns if r not in cols]
+                    missing = [r for r in (req_lower if case_insensitive_flag else required_columns)
+                               if r not in (cols_lower if case_insensitive_flag else cols)]
                     skipped[sheet_name] = missing
             except Exception as e:
                 skipped[sheet_name] = f"Read error: {e}"
-                
         if not merged_dfs:
             return None, f"No sheets contained all required columns: {', '.join(required_columns)}", skipped, sheets, []
-            
-        final_df = pd.concat(merged_dfs, ignore_index=True)
-        return final_df, None, skipped, sheets, included_sheets
+        return pd.concat(merged_dfs, ignore_index=True), None, skipped, sheets, included_sheets
     except Exception as exc:
         return None, f"Excel file read error: {exc}", {}, {}, []
 
-# Resolve data logic if file is active
-final_df = None
-error_msg = None
-skipped_sheets = {}
-all_sheets = {}
-included_sheets = []
-paid_col = None
-withdrawn_col = None
-balance_col = None
+
+# ─── RESOLVE DATA ─────────────────────────────────────────────────────────────
+final_df = error_msg = paid_col = withdrawn_col = balance_col = None
+skipped_sheets, all_sheets, included_sheets = {}, {}, []
 
 if st.session_state["uploaded_file_bytes"] is not None:
     final_df, error_msg, skipped_sheets, all_sheets, included_sheets = process_statement(
@@ -530,575 +631,465 @@ if st.session_state["uploaded_file_bytes"] is not None:
         st.session_state["required_cols"],
         st.session_state["case_insensitive"]
     )
-    
     if final_df is not None:
-        paid_col = find_col(final_df, "Paid In")
+        paid_col      = find_col(final_df, "Paid In")
         withdrawn_col = find_col(final_df, "Withdrawn")
-        balance_col = find_col(final_df, "Balance")
-        
-        if paid_col:
-            final_df[paid_col] = pd.to_numeric(final_df[paid_col], errors="coerce")
-        if withdrawn_col:
-            final_df[withdrawn_col] = pd.to_numeric(final_df[withdrawn_col], errors="coerce")
-        if balance_col:
-            final_df[balance_col] = pd.to_numeric(final_df[balance_col], errors="coerce")
-            
-        # Contextual Date selection in sidebar when file is loaded
+        balance_col   = find_col(final_df, "Balance")
+        for col in [paid_col, withdrawn_col, balance_col]:
+            if col:
+                final_df[col] = pd.to_numeric(final_df[col], errors="coerce")
+
+        # Date column picker — shown inline on non-home pages
         candidate_date_cols = [
             c for c in final_df.columns
             if any(k in c.lower() for k in ("date", "time", "completion", "timestamp"))
         ]
-        
-        with st.sidebar:
-            st.markdown("---")
-            st.subheader("⚙️ Grouping Options")
-            if candidate_date_cols:
-                # Resolve date selection state
-                saved_date_col = st.session_state["date_col"]
-                if saved_date_col not in candidate_date_cols:
-                    saved_date_col = candidate_date_cols[0]
-                    st.session_state["date_col"] = saved_date_col
-                
-                selected_date = st.selectbox(
-                    "Date Column for Grouping",
-                    options=candidate_date_cols,
-                    index=candidate_date_cols.index(saved_date_col),
-                    help="Column used to group transactions by month."
-                )
-                st.session_state["date_col"] = selected_date
-            else:
-                date_input = st.text_input(
-                    "Specify Date Column name",
-                    value=st.session_state["date_col"],
-                    help="Specify the column containing transaction dates."
-                )
-                st.session_state["date_col"] = date_input
+        saved_date = st.session_state["date_col"]
+        if candidate_date_cols and saved_date not in candidate_date_cols:
+            st.session_state["date_col"] = candidate_date_cols[0]
 
-# --- Global Header for Analytical pages ---
-if menu != "🏠 Home & Upload":
-    if st.session_state["uploaded_file_bytes"] is None:
-        st.markdown('<div class="main-title">📥 Mpesa Statement Analyzer</div>', unsafe_allow_html=True)
-        st.markdown('<div class="main-subtitle">Select analysis tabs from the sidebar</div>', unsafe_allow_html=True)
-        st.warning("⚠️ No workbook uploaded yet. Please navigate to **🏠 Home & Upload** to select your Excel file.")
-    elif error_msg:
-        st.markdown('<div class="main-title">📥 Mpesa Statement Analyzer</div>', unsafe_allow_html=True)
-        st.error(f"❌ {error_msg}")
-    elif final_df is not None:
-        st.markdown(f'<div class="main-title">📁 {st.session_state["uploaded_file_name"]}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="main-subtitle">Parsed transaction metrics and summary insights</div>', unsafe_allow_html=True)
-        
-        # Calculate global KPIs
-        total_transactions = len(final_df)
-        total_sheets = len(all_sheets)
-        merged_count = len(included_sheets)
-        
-        sum_paid = final_df[paid_col].sum() if (paid_col and not final_df[paid_col].isna().all()) else 0.0
-        sum_withdrawn = final_df[withdrawn_col].sum() if (withdrawn_col and not final_df[withdrawn_col].isna().all()) else 0.0
-        net_flow = sum_paid - sum_withdrawn
-        
-        # Display custom modern Tailwind-style KPI Cards Grid
-        sum_paid_val = f"KES {sum_paid:,.2f}"
-        sum_withdrawn_val = f"KES {sum_withdrawn:,.2f}"
-        net_flow_val = f"KES {net_flow:,.2f}"
-        if net_flow < 0:
-            net_flow_val = f"- KES {abs(net_flow):,.2f}"
-        
-        net_theme_bg = "bg-teal-50" if net_flow >= 0 else "bg-rose-50"
-        net_theme_badge = "badge-teal" if net_flow >= 0 else "badge-rose"
-        net_theme_card = "kpi-card-teal" if net_flow >= 0 else "kpi-card-rose"
-        net_trend = "Positive Flow" if net_flow >= 0 else "Negative Flow"
 
-        kpi_html = f"""
-        <div class="kpi-grid">
-            <div class="kpi-card kpi-card-indigo">
-                <div class="kpi-header">
-                    <span class="kpi-label">Sheets Combined</span>
-                    <div class="kpi-icon-container bg-indigo-50">📁</div>
-                </div>
-                <div class="kpi-value">{merged_count} / {total_sheets}</div>
-                <div class="kpi-badge badge-indigo">Excel Workbook</div>
-            </div>
-            <div class="kpi-card kpi-card-amber">
-                <div class="kpi-header">
-                    <span class="kpi-label">Transactions</span>
-                    <div class="kpi-icon-container bg-amber-50">🔢</div>
-                </div>
-                <div class="kpi-value">{total_transactions:,}</div>
-                <div class="kpi-badge badge-amber">Total Rows</div>
-            </div>
-            <div class="kpi-card kpi-card-emerald">
-                <div class="kpi-header">
-                    <span class="kpi-label">Total Deposits (In)</span>
-                    <div class="kpi-icon-container bg-emerald-50">📈</div>
-                </div>
-                <div class="kpi-value">{sum_paid_val}</div>
-                <div class="kpi-badge badge-emerald">Cash Inflow</div>
-            </div>
-            <div class="kpi-card kpi-card-rose">
-                <div class="kpi-header">
-                    <span class="kpi-label">Total Withdrawn (Out)</span>
-                    <div class="kpi-icon-container bg-rose-50">📉</div>
-                </div>
-                <div class="kpi-value">{sum_withdrawn_val}</div>
-                <div class="kpi-badge badge-rose">Cash Outflow</div>
-            </div>
-            <div class="kpi-card {net_theme_card}">
-                <div class="kpi-header">
-                    <span class="kpi-label">Net Cash Flow</span>
-                    <div class="kpi-icon-container {net_theme_bg}">💰</div>
-                </div>
-                <div class="kpi-value">{net_flow_val}</div>
-                <div class="kpi-badge {net_theme_badge}">{net_trend}</div>
-            </div>
+# ─── KPI HELPER ───────────────────────────────────────────────────────────────
+def render_kpis():
+    if final_df is None:
+        return
+    total_transactions = len(final_df)
+    merged_count = len(included_sheets)
+    total_sheets = len(all_sheets)
+    sum_paid      = final_df[paid_col].sum()      if paid_col      else 0.0
+    sum_withdrawn = final_df[withdrawn_col].sum() if withdrawn_col else 0.0
+    net_flow      = sum_paid - sum_withdrawn
+
+    sum_paid_str      = f"KES {sum_paid:,.0f}"
+    sum_withdrawn_str = f"KES {sum_withdrawn:,.0f}"
+    net_flow_str      = f"KES {abs(net_flow):,.0f}"
+    if net_flow < 0:
+        net_flow_str = f"- {net_flow_str}"
+
+    net_bg    = "bg-teal-50"    if net_flow >= 0 else "bg-rose-50"
+    net_badge = "badge-teal"    if net_flow >= 0 else "badge-rose"
+    net_card  = "kpi-card-teal" if net_flow >= 0 else "kpi-card-rose"
+    net_trend = "Positive Flow" if net_flow >= 0 else "Negative Flow"
+
+    st.markdown(f"""
+    <div class="kpi-grid">
+        <div class="kpi-card kpi-card-indigo">
+            <div class="kpi-header"><span class="kpi-label">Sheets Merged</span><div class="kpi-icon-container bg-indigo-50">📁</div></div>
+            <div class="kpi-value">{merged_count}/{total_sheets}</div>
+            <div class="kpi-badge badge-indigo">Workbook</div>
         </div>
-        """
-        st.markdown(kpi_html, unsafe_allow_html=True)
-        st.write("")
+        <div class="kpi-card kpi-card-amber">
+            <div class="kpi-header"><span class="kpi-label">Transactions</span><div class="kpi-icon-container bg-amber-50">🔢</div></div>
+            <div class="kpi-value">{total_transactions:,}</div>
+            <div class="kpi-badge badge-amber">Total Rows</div>
+        </div>
+        <div class="kpi-card kpi-card-emerald">
+            <div class="kpi-header"><span class="kpi-label">Total Deposits</span><div class="kpi-icon-container bg-emerald-50">📈</div></div>
+            <div class="kpi-value">{sum_paid_str}</div>
+            <div class="kpi-badge badge-emerald">Cash Inflow</div>
+        </div>
+        <div class="kpi-card kpi-card-rose">
+            <div class="kpi-header"><span class="kpi-label">Total Withdrawn</span><div class="kpi-icon-container bg-rose-50">📉</div></div>
+            <div class="kpi-value">{sum_withdrawn_str}</div>
+            <div class="kpi-badge badge-rose">Cash Outflow</div>
+        </div>
+        <div class="kpi-card {net_card}">
+            <div class="kpi-header"><span class="kpi-label">Net Cash Flow</span><div class="kpi-icon-container {net_bg}">💰</div></div>
+            <div class="kpi-value">{net_flow_str}</div>
+            <div class="kpi-badge {net_badge}">{net_trend}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- Page 1: Home & Upload ---
-if menu == "🏠 Home & Upload":
-    st.markdown('<div class="main-title">📥 Mpesa Statement Analyzer</div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-subtitle">Combine, summarize, and visualize multi-sheet Mpesa data instantly.</div>', unsafe_allow_html=True)
-    
+
+# ─── GLOBAL HEADER (non-home pages) ──────────────────────────────────────────
+def render_page_header(title, subtitle):
+    st.markdown(f'<div class="main-title">{title}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="main-subtitle">{subtitle}</div>', unsafe_allow_html=True)
+
+
+# ─── DATE COLUMN PICKER (inline widget, shown when needed) ───────────────────
+def render_date_picker(label="⚙️ Grouping: Date Column"):
+    if final_df is None:
+        return
+    candidate_date_cols = [
+        c for c in final_df.columns
+        if any(k in c.lower() for k in ("date", "time", "completion", "timestamp"))
+    ]
+    if candidate_date_cols:
+        saved = st.session_state["date_col"]
+        if saved not in candidate_date_cols:
+            saved = candidate_date_cols[0]
+        sel = st.selectbox(label, candidate_date_cols,
+                           index=candidate_date_cols.index(saved),
+                           help="Column used to group transactions by month.")
+        st.session_state["date_col"] = sel
+    else:
+        val = st.text_input("Specify Date Column name",
+                            value=st.session_state["date_col"])
+        st.session_state["date_col"] = val
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAGE 1 — HOME & UPLOAD
+# ═══════════════════════════════════════════════════════════════════════════════
+if menu_page == "home":
+    render_page_header("📥 Mpesa Statement Analyzer",
+                       "Combine, summarize, and visualize multi-sheet Mpesa data instantly.")
+
     if st.session_state["uploaded_file_bytes"] is None:
-        # File uploader is only shown if no active file is loaded
         uploaded_file = st.file_uploader(
-            "Upload Excel Workbook (.xlsx, .xls)", 
+            "Upload Excel Workbook (.xlsx, .xls)",
             type=["xlsx", "xls"],
             help="Upload the Excel file containing one or more client Mpesa sheets."
         )
         if uploaded_file is not None:
             st.session_state["uploaded_file_bytes"] = uploaded_file.getvalue()
-            st.session_state["uploaded_file_name"] = uploaded_file.name
+            st.session_state["uploaded_file_name"]  = uploaded_file.name
             st.rerun()
     else:
-        # Active file feedback with an explicit "Clear" action
-        st.success(f"✅ Active Statement Loaded: **{st.session_state['uploaded_file_name']}**")
-        st.info("👈 Use the sidebar navigation menu to view dashboard charts, records, and pivot tables.")
-        
-        if st.button("🗑️ Clear & Upload Another File", help="Clear current workbook and upload a new one."):
+        st.success(f"✅ **{st.session_state['uploaded_file_name']}** is loaded and ready.")
+        st.info("👆 Use the navigation bar above to switch between dashboard views.")
+        if st.button("🗑️ Clear & Upload Another File"):
             st.session_state["uploaded_file_bytes"] = None
-            st.session_state["uploaded_file_name"] = None
+            st.session_state["uploaded_file_name"]  = None
             st.session_state["date_col"] = ""
             st.rerun()
-        
-    # Step guide
+
     st.markdown("""
     <div class="welcome-card">
-        <h3 style="margin-top:0; color: #0f172a; font-size: 1.4rem;">Get Started in Seconds</h3>
-        <p style="color: #64748b; margin-bottom: 2rem;">Follow these steps to analyze your client statement data:</p>
+        <h3 style="margin-top:0;margin-bottom:1rem;">Get Started in Seconds</h3>
         <div class="welcome-step">
             <div class="welcome-icon">1</div>
-            <div class="welcome-text">
-                <strong>Upload Statement:</strong> Drag and drop your client's Excel workbook (.xlsx or .xls) above.
-            </div>
+            <div class="welcome-text"><strong>Upload Statement:</strong> Drag &amp; drop your client's Excel workbook above.</div>
         </div>
         <div class="welcome-step">
             <div class="welcome-icon">2</div>
-            <div class="welcome-text">
-                <strong>Confirm Settings:</strong> Expand the configuration details below to customize statement columns.
-            </div>
+            <div class="welcome-text"><strong>Confirm Settings:</strong> Expand configuration below to customize column matching.</div>
         </div>
         <div class="welcome-step">
             <div class="welcome-icon">3</div>
-            <div class="welcome-text">
-                <strong>View Insights:</strong> Use the sidebar navigation on the left to review metrics, visualization charts, monthly pivot summaries, or print reports.
-            </div>
+            <div class="welcome-text"><strong>View Insights:</strong> Tap any item in the navigation bar to explore metrics, charts, and reports.</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Settings panel on Home page
+
     with st.expander("⚙️ Configuration Settings", expanded=True):
         req_cols = st.text_input(
-            "Required columns (comma-separated)", 
+            "Required columns (comma-separated)",
             value=st.session_state["required_cols"],
-            help="Only sheets containing all these column headings will be merged."
+            help="Only sheets containing ALL these columns will be merged."
         )
         if req_cols != st.session_state["required_cols"]:
             st.session_state["required_cols"] = req_cols
             st.rerun()
-            
         case_ins = st.checkbox(
-            "Case-insensitive column matching", 
-            value=st.session_state["case_insensitive"],
-            help="Matches columns regardless of casing (e.g. matches 'Paid In' with 'paid in')."
+            "Case-insensitive column matching",
+            value=st.session_state["case_insensitive"]
         )
         if case_ins != st.session_state["case_insensitive"]:
             st.session_state["case_insensitive"] = case_ins
             st.rerun()
 
-# --- Page 2: Visual Dashboard ---
-elif menu == "📈 Visual Dashboard":
-    if final_df is not None:
-        st.subheader("Cash Flow Dashboard Insights")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAGE 2 — VISUAL DASHBOARD
+# ═══════════════════════════════════════════════════════════════════════════════
+elif menu_page == "dashboard":
+    if st.session_state["uploaded_file_bytes"] is None:
+        render_page_header("📈 Visual Dashboard", "Upload a workbook first to see charts.")
+        st.warning("⚠️ No workbook uploaded. Go to **Home & Upload** to get started.")
+    elif error_msg:
+        render_page_header("📈 Visual Dashboard", "")
+        st.error(f"❌ {error_msg}")
+    elif final_df is not None:
+        render_page_header(f"📈 {st.session_state['uploaded_file_name']}",
+                           "Parsed transaction metrics and summary insights")
+        render_kpis()
+        render_date_picker()
         date_col = st.session_state["date_col"]
-        
+        st.markdown("---")
+
         if not date_col:
-            st.info("ℹ️ Select or specify a date column in the sidebar grouping settings to compute monthly trends.")
+            st.info("ℹ️ Select a date column above to compute monthly trends.")
         elif paid_col is None or withdrawn_col is None:
-            st.warning("⚠️ Visual insights require 'Paid In' and 'Withdrawn' columns to calculate deposits/withdrawals.")
+            st.warning("⚠️ 'Paid In' and 'Withdrawn' columns are required for charts.")
         else:
             final_df["_parsed_date"] = pd.to_datetime(final_df[date_col], errors="coerce")
-            valid_dates_count = final_df["_parsed_date"].notna().sum()
-            
-            if valid_dates_count == 0:
-                st.error(f"❌ Could not parse any valid dates from column **'{date_col}'**. Please ensure the column contains dates.")
+            if final_df["_parsed_date"].notna().sum() == 0:
+                st.error(f"❌ Could not parse dates from **'{date_col}'**.")
             else:
                 final_df["_MonthLabel"] = final_df["_parsed_date"].dt.strftime("%B %Y")
-                final_df["_MonthSort"] = final_df["_parsed_date"].dt.strftime("%Y-%m")
-                
-                # Group monthly values
+                final_df["_MonthSort"]  = final_df["_parsed_date"].dt.strftime("%Y-%m")
                 dash_pivot = (
-                    final_df.groupby(["_MonthSort", "_MonthLabel"])[ [paid_col, withdrawn_col] ]
-                    .sum(min_count=1)
-                    .reset_index()
+                    final_df.groupby(["_MonthSort", "_MonthLabel"])[[paid_col, withdrawn_col]]
+                    .sum(min_count=1).reset_index()
                     .rename(columns={"_MonthLabel": "Month", paid_col: "Deposits", withdrawn_col: "Withdrawals"})
                 )
                 dash_pivot = dash_pivot.sort_values("_MonthSort").reset_index(drop=True)
-                
-                # Meltdown for Altair plotting
-                melt_df = dash_pivot.melt(id_vars=["Month", "_MonthSort"], value_vars=["Deposits", "Withdrawals"], 
-                                         var_name="Transaction Type", value_name="Amount")
-                
-                # Custom styled charts
-                c1, c2 = st.columns([2, 1])
-                
-                with c1:
-                    st.markdown("##### Monthly Cash Flow (Deposits vs. Withdrawals)")
-                    cash_flow_chart = alt.Chart(melt_df).mark_bar(
-                        cornerRadiusTopLeft=6, 
-                        cornerRadiusTopRight=6
-                    ).encode(
-                        x=alt.X('Month:N', sort=alt.SortField(field='_MonthSort', order='ascending'), title='Month'),
-                        y=alt.Y('Amount:Q', title='Amount (KES)'),
-                        color=alt.Color('Transaction Type:N', scale=alt.Scale(domain=['Deposits', 'Withdrawals'], range=['#10b981', '#f43f5e'])),
-                        xOffset='Transaction Type:N',
-                        tooltip=[
-                            alt.Tooltip('Month:N'),
-                            alt.Tooltip('Transaction Type:N'),
-                            alt.Tooltip('Amount:Q', format=",.2f")
-                        ]
-                    ).properties(
-                        height=350
-                    ).configure_view(
-                        strokeOpacity=0
-                    )
-                    st.altair_chart(cash_flow_chart, use_container_width=True)
-                    
-                with c2:
-                    st.markdown("##### Net Monthly Savings / Cash Balance")
-                    dash_pivot["Net Savings"] = dash_pivot["Deposits"].fillna(0) - dash_pivot["Withdrawals"].fillna(0)
-                    
-                    net_chart = alt.Chart(dash_pivot).mark_area(
-                        line={'color': '#0d9488', 'width': 2.5},
-                        color=alt.Gradient(
-                            gradient='linear',
-                            stops=[alt.GradientStop(color='#ccfbf1', offset=0),
-                                   alt.GradientStop(color='#ffffff', offset=1)],
-                            x1=1, y1=1, x2=1, y2=0
-                        )
-                    ).encode(
-                        x=alt.X('Month:N', sort=alt.SortField(field='_MonthSort', order='ascending'), title='Month'),
-                        y=alt.Y('Net Savings:Q', title='Net Amount (KES)'),
-                        tooltip=[
-                            alt.Tooltip('Month:N'),
-                            alt.Tooltip('Net Savings:Q', format=",.2f")
-                        ]
-                    ).properties(
-                        height=350
-                    )
-                    st.altair_chart(net_chart, use_container_width=True)
-                    
-                # Distribution charts
-                st.markdown("---")
-                st.markdown("##### Statement Summary Distribution")
-                c_vol, c_net = st.columns(2)
-                with c_vol:
-                    count_paid = final_df[paid_col].notna().sum()
-                    count_withdrawn = final_df[withdrawn_col].notna().sum()
-                    counts_df = pd.DataFrame({
-                        "Category": ["Deposits (Paid In)", "Withdrawals (Out)"],
-                        "Count": [count_paid, count_withdrawn]
-                    })
-                    volume_chart = alt.Chart(counts_df).mark_arc(innerRadius=60).encode(
-                        theta=alt.Theta(field="Count", type="quantitative"),
-                        color=alt.Color(field="Category", type="nominal", scale=alt.Scale(range=['#10b981', '#f43f5e'])),
-                        tooltip=["Category", "Count"]
-                    ).properties(
-                        height=250
-                    )
-                    st.markdown("<p style='text-align: center; color: #64748b;'>Transaction Count Share</p>", unsafe_allow_html=True)
-                    st.altair_chart(volume_chart, use_container_width=True)
-                    
-                with c_net:
-                    share_df = pd.DataFrame({
-                        "Category": ["Deposits (Paid In)", "Withdrawals (Out)"],
-                        "Total Value": [sum_paid, sum_withdrawn]
-                    })
-                    value_chart = alt.Chart(share_df).mark_arc(innerRadius=60).encode(
-                        theta=alt.Theta(field="Total Value", type="quantitative"),
-                        color=alt.Color(field="Category", type="nominal", scale=alt.Scale(range=['#10b981', '#f43f5e'])),
-                        tooltip=["Category", alt.Tooltip("Total Value", format=",.2f")]
-                    ).properties(
-                        height=250
-                    )
-                    st.markdown("<p style='text-align: center; color: #64748b;'>Transaction Volume Value (KES)</p>", unsafe_allow_html=True)
-                    st.altair_chart(value_chart, use_container_width=True)
+                melt_df = dash_pivot.melt(
+                    id_vars=["Month", "_MonthSort"],
+                    value_vars=["Deposits", "Withdrawals"],
+                    var_name="Transaction Type", value_name="Amount"
+                )
 
-# --- Page 3: Merged Statement ---
-elif menu == "📁 Merged Statement":
-    if final_df is not None:
+                st.markdown("##### Monthly Cash Flow — Deposits vs Withdrawals")
+                cash_chart = alt.Chart(melt_df).mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5).encode(
+                    x=alt.X('Month:N', sort=alt.SortField(field='_MonthSort', order='ascending'), title='Month'),
+                    y=alt.Y('Amount:Q', title='Amount (KES)'),
+                    color=alt.Color('Transaction Type:N', scale=alt.Scale(
+                        domain=['Deposits', 'Withdrawals'], range=['#10b981', '#f43f5e'])),
+                    xOffset='Transaction Type:N',
+                    tooltip=[alt.Tooltip('Month:N'), alt.Tooltip('Transaction Type:N'),
+                             alt.Tooltip('Amount:Q', format=",.0f")]
+                ).properties(height=320).configure_view(strokeOpacity=0)
+                st.altair_chart(cash_chart, use_container_width=True)
+
+                st.markdown("---")
+                st.markdown("##### Net Monthly Savings")
+                dash_pivot["Net Savings"] = dash_pivot["Deposits"].fillna(0) - dash_pivot["Withdrawals"].fillna(0)
+                net_chart = alt.Chart(dash_pivot).mark_area(
+                    line={'color': '#0d9488', 'width': 2.5},
+                    color=alt.Gradient(gradient='linear',
+                        stops=[alt.GradientStop(color='#ccfbf1', offset=0),
+                               alt.GradientStop(color='#ffffff', offset=1)],
+                        x1=1, y1=1, x2=1, y2=0)
+                ).encode(
+                    x=alt.X('Month:N', sort=alt.SortField(field='_MonthSort', order='ascending')),
+                    y=alt.Y('Net Savings:Q', title='Net Amount (KES)'),
+                    tooltip=[alt.Tooltip('Month:N'), alt.Tooltip('Net Savings:Q', format=",.0f")]
+                ).properties(height=280)
+                st.altair_chart(net_chart, use_container_width=True)
+
+                st.markdown("---")
+                st.markdown("##### Transaction Distribution")
+                c_vol, c_val = st.columns(2)
+                with c_vol:
+                    cnt_df = pd.DataFrame({
+                        "Category": ["Deposits", "Withdrawals"],
+                        "Count": [final_df[paid_col].notna().sum(), final_df[withdrawn_col].notna().sum()]
+                    })
+                    donut1 = alt.Chart(cnt_df).mark_arc(innerRadius=55).encode(
+                        theta=alt.Theta("Count:Q"),
+                        color=alt.Color("Category:N", scale=alt.Scale(range=['#10b981', '#f43f5e'])),
+                        tooltip=["Category", "Count"]
+                    ).properties(height=230)
+                    st.markdown("<p style='text-align:center;color:#64748b;'>Transaction Count</p>", unsafe_allow_html=True)
+                    st.altair_chart(donut1, use_container_width=True)
+                with c_val:
+                    sum_paid_v = final_df[paid_col].sum() if paid_col else 0
+                    sum_wd_v   = final_df[withdrawn_col].sum() if withdrawn_col else 0
+                    val_df = pd.DataFrame({
+                        "Category": ["Deposits", "Withdrawals"],
+                        "Total Value": [sum_paid_v, sum_wd_v]
+                    })
+                    donut2 = alt.Chart(val_df).mark_arc(innerRadius=55).encode(
+                        theta=alt.Theta("Total Value:Q"),
+                        color=alt.Color("Category:N", scale=alt.Scale(range=['#10b981', '#f43f5e'])),
+                        tooltip=["Category", alt.Tooltip("Total Value:Q", format=",.0f")]
+                    ).properties(height=230)
+                    st.markdown("<p style='text-align:center;color:#64748b;'>Transaction Volume (KES)</p>", unsafe_allow_html=True)
+                    st.altair_chart(donut2, use_container_width=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAGE 3 — MERGED STATEMENT
+# ═══════════════════════════════════════════════════════════════════════════════
+elif menu_page == "merged":
+    if st.session_state["uploaded_file_bytes"] is None:
+        render_page_header("📁 Merged Statement", "Upload a workbook first.")
+        st.warning("⚠️ No workbook uploaded. Go to **Home & Upload** to get started.")
+    elif error_msg:
+        render_page_header("📁 Merged Statement", "")
+        st.error(f"❌ {error_msg}")
+    elif final_df is not None:
+        render_page_header(f"📁 {st.session_state['uploaded_file_name']}",
+                           "Parsed transaction metrics and summary insights")
+        render_kpis()
+        st.markdown("---")
         st.subheader("Combined Transaction Records")
-        st.write(f"Displaying first 100 rows of merged statement (Total records: {len(final_df)}):")
+        st.write(f"Showing first 100 of **{len(final_df):,}** rows:")
         st.dataframe(final_df.head(100), use_container_width=True)
-        
+
         st.markdown("##### Download Combined Statement")
         dc1, dc2, _ = st.columns([1, 1, 2])
-        
-        # Excel download
+
         try:
             towrite = io.BytesIO()
             final_df.to_excel(towrite, index=False, engine="openpyxl")
             towrite.seek(0)
             dc1.download_button(
-                label="📥 Download Merged Excel (.xlsx)",
-                data=towrite,
+                "📥 Excel (.xlsx)", data=towrite,
                 file_name=f"merged_{os.path.splitext(st.session_state['uploaded_file_name'])[0]}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         except Exception:
-            towrite = io.BytesIO()
-            final_df.to_excel(towrite, index=False)
-            towrite.seek(0)
-            dc1.download_button(
-                label="📥 Download Merged Excel (.xlsx)",
-                data=towrite,
-                file_name=f"merged_{os.path.splitext(st.session_state['uploaded_file_name'])[0]}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
-            
-        # CSV download
+            pass
+
         csv_bytes = final_df.to_csv(index=False).encode("utf-8")
         dc2.download_button(
-            label="📥 Download Merged CSV (.csv)",
-            data=csv_bytes,
+            "📥 CSV (.csv)", data=csv_bytes,
             file_name=f"merged_{os.path.splitext(st.session_state['uploaded_file_name'])[0]}.csv",
             mime="text/csv"
         )
-        
-        # Details about sheet inclusion/skipping
+
         st.markdown("---")
-        st.subheader("Aggregation Processing Details")
-        
+        st.subheader("Sheet Processing Details")
         c_inc, c_skp = st.columns(2)
         with c_inc:
-            st.markdown(f"🟢 **Merged Sheets ({len(included_sheets)}):**")
+            st.markdown(f"🟢 **Merged ({len(included_sheets)}):**")
             for s in included_sheets:
                 st.write(f"- `{s}`")
         with c_skp:
-            st.markdown(f"🟡 **Skipped Sheets ({len(skipped_sheets)}):**")
+            st.markdown(f"🟡 **Skipped ({len(skipped_sheets)}):**")
             if skipped_sheets:
-                for sheet_name, reason in skipped_sheets.items():
+                for sn, reason in skipped_sheets.items():
                     if isinstance(reason, list):
-                        st.write(f"- `{sheet_name}`: Missing column(s) `{', '.join(reason)}`")
+                        st.write(f"- `{sn}`: missing `{', '.join(reason)}`")
                     else:
-                        st.write(f"- `{sheet_name}`: {reason}")
+                        st.write(f"- `{sn}`: {reason}")
             else:
-                st.write("None")
+                st.write("None — all sheets were included.")
 
-# --- Page 4: Monthly Pivot ---
-elif menu == "📊 Monthly Pivot":
-    if final_df is not None:
-        st.subheader("Monthly Transaction Pivot Summary")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAGE 4 — MONTHLY PIVOT
+# ═══════════════════════════════════════════════════════════════════════════════
+elif menu_page == "pivot":
+    if st.session_state["uploaded_file_bytes"] is None:
+        render_page_header("📊 Monthly Pivot", "Upload a workbook first.")
+        st.warning("⚠️ No workbook uploaded. Go to **Home & Upload** to get started.")
+    elif error_msg:
+        render_page_header("📊 Monthly Pivot", "")
+        st.error(f"❌ {error_msg}")
+    elif final_df is not None:
+        render_page_header(f"📊 {st.session_state['uploaded_file_name']}",
+                           "Parsed transaction metrics and summary insights")
+        render_kpis()
+        render_date_picker()
         date_col = st.session_state["date_col"]
-        
+        st.markdown("---")
+
         if not date_col:
-            st.warning("⚠️ Select or specify a date column in the sidebar grouping settings to calculate the Monthly Pivot table.")
+            st.warning("⚠️ Select a date column above to build the pivot table.")
         elif paid_col is None or withdrawn_col is None:
-            st.warning("⚠️ 'Paid In' and 'Withdrawn' columns are required to construct the pivot table.")
+            st.warning("⚠️ 'Paid In' and 'Withdrawn' columns are required.")
         else:
             final_df["_parsed_date"] = pd.to_datetime(final_df[date_col], errors="coerce")
-            
             if final_df["_parsed_date"].isna().all():
-                st.error(f"❌ Error: Cannot parse valid datetime values from '{date_col}'. Check the values.")
+                st.error(f"❌ Cannot parse dates from **'{date_col}'**.")
             else:
                 final_df["_MonthLabel"] = final_df["_parsed_date"].dt.strftime("%B %Y")
-                final_df["_MonthSort"] = final_df["_parsed_date"].dt.strftime("%Y-%m")
-                
-                # Pivot logic
+                final_df["_MonthSort"]  = final_df["_parsed_date"].dt.strftime("%Y-%m")
                 pivot_df = (
                     final_df.groupby(["_MonthSort", "_MonthLabel"])[[paid_col, withdrawn_col]]
-                    .sum(min_count=1)
-                    .reset_index()
-                    .rename(columns={"_MonthLabel": "Month", paid_col: "Sum Paid In", withdrawn_col: "Sum Withdrawn"})
+                    .sum(min_count=1).reset_index()
+                    .rename(columns={"_MonthLabel": "Month",
+                                     paid_col: "Sum Paid In",
+                                     withdrawn_col: "Sum Withdrawn"})
                 )
                 pivot_df = pivot_df.sort_values("_MonthSort").reset_index(drop=True)
                 pivot_df["Net Cash Flow"] = pivot_df["Sum Paid In"].fillna(0) - pivot_df["Sum Withdrawn"].fillna(0)
                 display_pivot = pivot_df.drop(columns=["_MonthSort"])
-                
-                st.write("Summary table of deposits, withdrawals, and net savings aggregated chronologically:")
+
+                st.subheader("Monthly Transaction Pivot Summary")
                 st.dataframe(display_pivot, use_container_width=True)
-                
-                st.markdown("##### Download Pivot Reports")
-                p_col1, p_col2, _ = st.columns([1, 1, 2])
-                
-                # Pivot CSV download
-                pivot_csv = display_pivot.to_csv(index=False).encode("utf-8")
-                p_col1.download_button(
-                    "📥 Download Pivot CSV", 
-                    data=pivot_csv, 
-                    file_name=f"pivot_summary_{os.path.splitext(st.session_state['uploaded_file_name'])[0]}.csv", 
+
+                st.markdown("##### Download Pivot Report")
+                p1, p2, _ = st.columns([1, 1, 2])
+                p1.download_button(
+                    "📥 Pivot CSV", data=display_pivot.to_csv(index=False).encode("utf-8"),
+                    file_name=f"pivot_{os.path.splitext(st.session_state['uploaded_file_name'])[0]}.csv",
                     mime="text/csv"
                 )
-                
-                # Pivot Excel download
                 try:
                     piv_bytes = io.BytesIO()
                     display_pivot.to_excel(piv_bytes, index=False, engine="openpyxl")
                     piv_bytes.seek(0)
-                    p_col2.download_button(
-                        label="📥 Download Pivot Excel (.xlsx)",
-                        data=piv_bytes,
-                        file_name=f"pivot_summary_{os.path.splitext(st.session_state['uploaded_file_name'])[0]}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    p2.download_button(
+                        "📥 Pivot Excel", data=piv_bytes,
+                        file_name=f"pivot_{os.path.splitext(st.session_state['uploaded_file_name'])[0]}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
                 except Exception:
-                    piv_bytes = io.BytesIO()
-                    display_pivot.to_excel(piv_bytes, index=False)
-                    piv_bytes.seek(0)
-                    p_col2.download_button(
-                        label="📥 Download Pivot Excel (.xlsx)",
-                        data=piv_bytes,
-                        file_name=f"pivot_summary_{os.path.splitext(st.session_state['uploaded_file_name'])[0]}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    )
+                    pass
 
-# --- Page 5: Printable Report ---
-elif menu == "🖨️ Printable Report":
-    if final_df is not None:
-        st.subheader("Print Preview & Export")
-        st.write("Use this view to print a neat summary statement of client's monthly cash flow activity.")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAGE 5 — PRINTABLE REPORT
+# ═══════════════════════════════════════════════════════════════════════════════
+elif menu_page == "report":
+    if st.session_state["uploaded_file_bytes"] is None:
+        render_page_header("🖨️ Printable Report", "Upload a workbook first.")
+        st.warning("⚠️ No workbook uploaded. Go to **Home & Upload** to get started.")
+    elif error_msg:
+        render_page_header("🖨️ Printable Report", "")
+        st.error(f"❌ {error_msg}")
+    elif final_df is not None:
+        render_page_header(f"🖨️ {st.session_state['uploaded_file_name']}",
+                           "Print-ready monthly cash flow summary")
+        render_kpis()
+        render_date_picker()
         date_col = st.session_state["date_col"]
-        
+        st.markdown("---")
+
         if not date_col or paid_col is None or withdrawn_col is None:
-            st.warning("⚠️ Configure settings to compile pivot data before generating a report.")
+            st.warning("⚠️ Configure date and column settings above to generate the report.")
         else:
             final_df["_parsed_date"] = pd.to_datetime(final_df[date_col], errors="coerce")
-            
             if not final_df["_parsed_date"].isna().all():
                 final_df["_MonthLabel"] = final_df["_parsed_date"].dt.strftime("%B %Y")
-                final_df["_MonthSort"] = final_df["_parsed_date"].dt.strftime("%Y-%m")
-                
+                final_df["_MonthSort"]  = final_df["_parsed_date"].dt.strftime("%Y-%m")
                 pivot_df = (
                     final_df.groupby(["_MonthSort", "_MonthLabel"])[[paid_col, withdrawn_col]]
-                    .sum(min_count=1)
-                    .reset_index()
-                    .rename(columns={"_MonthLabel": "Month", paid_col: "Sum Paid In", withdrawn_col: "Sum Withdrawn"})
+                    .sum(min_count=1).reset_index()
+                    .rename(columns={"_MonthLabel": "Month",
+                                     paid_col: "Sum Paid In",
+                                     withdrawn_col: "Sum Withdrawn"})
                 )
                 pivot_df = pivot_df.sort_values("_MonthSort").reset_index(drop=True)
                 pivot_df["Net Cash Flow"] = pivot_df["Sum Paid In"].fillna(0) - pivot_df["Sum Withdrawn"].fillna(0)
                 display_pivot = pivot_df.drop(columns=["_MonthSort"])
-                
-                # Format numbers for printing
+
                 print_df = display_pivot.copy()
-                print_df["Sum Paid In"] = print_df["Sum Paid In"].apply(lambda v: f"{v:,.2f}" if pd.notna(v) else "-")
-                print_df["Sum Withdrawn"] = print_df["Sum Withdrawn"].apply(lambda v: f"{v:,.2f}" if pd.notna(v) else "-")
-                print_df["Net Cash Flow"] = print_df["Net Cash Flow"].apply(lambda v: f"{v:,.2f}" if pd.notna(v) else "-")
-                
+                for c in ["Sum Paid In", "Sum Withdrawn", "Net Cash Flow"]:
+                    print_df[c] = print_df[c].apply(lambda v: f"{v:,.2f}" if pd.notna(v) else "-")
+
                 pivot_html_table = print_df.to_html(index=False, classes="pivot-table", border=0)
-                
+                total_tx = len(final_df)
+
                 printable_html = f"""
-                <html>
-                  <head>
-                    <meta charset="utf-8"/>
-                    <style>
-                      body {{
-                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-                        padding: 24px;
-                        color: #334155;
-                        background-color: #ffffff;
-                      }}
-                      .header {{
-                        border-bottom: 2px solid #1b8a5a;
-                        padding-bottom: 12px;
-                        margin-bottom: 24px;
-                      }}
-                      .title {{
-                        font-size: 24px;
-                        font-weight: bold;
-                        color: #0f172a;
-                        margin: 0;
-                      }}
-                      .meta {{
-                        font-size: 13px;
-                        color: #64748b;
-                        margin-top: 4px;
-                      }}
-                      table.pivot-table {{
-                        border-collapse: collapse; 
-                        width: 100%;
-                        margin-top: 16px;
-                      }}
-                      table.pivot-table th {{
-                        background-color: #f8fafc;
-                        border-bottom: 2px solid #cbd5e1;
-                        color: #475569;
-                        font-weight: 600;
-                        padding: 10px 12px;
-                        text-align: left;
-                        font-size: 13px;
-                        text-transform: uppercase;
-                      }}
-                      table.pivot-table td {{
-                        border-bottom: 1px solid #e2e8f0; 
-                        padding: 10px 12px; 
-                        font-size: 14px;
-                        color: #334155;
-                      }}
-                      table.pivot-table tr:hover {{
-                        background-color: #f8fafc;
-                      }}
-                      .print-btn {{
-                        display: inline-block; 
-                        margin-bottom: 16px; 
-                        padding: 10px 18px; 
-                        background: #1b8a5a; 
-                        color: white; 
-                        border-radius: 6px; 
-                        cursor: pointer; 
-                        text-decoration: none;
-                        font-weight: 500;
-                        font-size: 14px;
-                        border: none;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        transition: background 0.2s;
-                      }}
-                      .print-btn:hover {{
-                        background: #0d5c3a;
-                      }}
-                      @media print {{
-                        .print-btn {{ display: none; }}
-                        body {{ padding: 0; }}
-                      }}
-                    </style>
-                  </head>
-                  <body>
-                    <button class="print-btn" onclick="window.print()">🖨️ Click to Print Report</button>
-                    <div class="header">
-                      <div class="title">M-Pesa Cash Flow Statement Summary</div>
-                      <div class="meta">Document: {st.session_state['uploaded_file_name']} | Total Transactions: {total_transactions:,}</div>
-                    </div>
-                    {pivot_html_table}
-                  </body>
-                </html>
+                <html><head><meta charset="utf-8">
+                <meta name="viewport" content="width=device-width,initial-scale=1">
+                <style>
+                  body {{ font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; padding:20px; color:#334155; background:#fff; }}
+                  .header {{ border-bottom:2px solid #1b8a5a; padding-bottom:12px; margin-bottom:20px; }}
+                  .title  {{ font-size:20px; font-weight:bold; color:#0f172a; margin:0; }}
+                  .meta   {{ font-size:12px; color:#64748b; margin-top:4px; }}
+                  table.pivot-table {{ border-collapse:collapse; width:100%; margin-top:12px; }}
+                  table.pivot-table th {{ background:#f8fafc; border-bottom:2px solid #cbd5e1; color:#475569; font-weight:600; padding:9px 10px; text-align:left; font-size:12px; text-transform:uppercase; }}
+                  table.pivot-table td {{ border-bottom:1px solid #e2e8f0; padding:9px 10px; font-size:13px; color:#334155; }}
+                  table.pivot-table tr:hover {{ background:#f8fafc; }}
+                  .print-btn {{ display:inline-block; margin-bottom:14px; padding:9px 16px; background:#1b8a5a; color:#fff; border-radius:6px; cursor:pointer; text-decoration:none; font-weight:500; font-size:13px; border:none; }}
+                  .print-btn:hover {{ background:#0d5c3a; }}
+                  @media print {{ .print-btn {{ display:none; }} body {{ padding:0; }} }}
+                  @media (max-width:600px) {{ table.pivot-table th, table.pivot-table td {{ padding:6px 6px; font-size:11px; }} }}
+                </style></head>
+                <body>
+                  <button class="print-btn" onclick="window.print()">🖨️ Print Report</button>
+                  <div class="header">
+                    <div class="title">M-Pesa Cash Flow Statement Summary</div>
+                    <div class="meta">Document: {st.session_state['uploaded_file_name']} &nbsp;|&nbsp; Total Transactions: {total_tx:,}</div>
+                  </div>
+                  {pivot_html_table}
+                </body></html>
                 """
-                # Render printable HTML inside app
                 st.components.v1.html(printable_html, height=600, scrolling=True)
 
-# Premium Footer
+
+# ─── FOOTER ──────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="app-footer">
-    Mpesa Statement Analyzer &copy; 2026. Made with &hearts; for Relationship Officers.
+    Mpesa Statement Analyzer &copy; 2026 &nbsp;·&nbsp; Made with ♥ for Relationship Officers
 </div>
 """, unsafe_allow_html=True)
